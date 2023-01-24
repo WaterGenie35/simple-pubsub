@@ -1,6 +1,7 @@
 # Simple Pub-Sub
 
 ## Instructions
+
 1. Build the Publish-Subscribe mechanism.
    Allow `ISubscriber` objects to register against a concrete `IPublishSubscribeService` object for an event type.
    Implement the publish method so that when a publish event occurs, all subscribers of that the event type published will have a chance to handle the event.
@@ -27,30 +28,47 @@ Please share your work using a GitHub repository with @proftom.
 
 ## Development
 
+### Formatting
+
+- The project is already configured to run eslint and prettier pre-commit, but we can additionally configure them on our development environment just to see them earlier.
+  - VSCode example `settings.json`:
+    ```json
+    {
+      // ...
+      "editor.formatOnSave": true,
+      "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+    ```
+
 ## Notes
 
 ### TypeScript
+
 See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 
 ### Pub-Sub
+
 - [GCP Pub/Sub Architectural Overview](https://cloud.google.com/pubsub/architecture)
-    - Event publishers should be decoupled from the receivers.
-    - In our case:
-        - Individual machines only care about publishing their statuses to certain events.
-        - Handlers only care about subscribing to events they are interested in.
+  - Event publishers should be decoupled from the receivers.
+  - In our case:
+    - Individual machines only care about publishing their statuses to certain events.
+    - Handlers only care about subscribing to events they are interested in.
 - [Azure's Pub/Sub Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber)
-    - In particular, see some common [issues and considerations](https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber#issues-and-considerations) for this pattern.
-        - Pub/sub pattern has no ordering guarantees in general, so we must keep this in mind when implementing.
-        - Duplicate messages also need to be handled for "at-most-once" delivery (or the events must be idempotent (e.g. add a "before" state that can be checked against?)).
+  - In particular, see some common [issues and considerations](https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber#issues-and-considerations) for this pattern.
+    - Pub/sub pattern has no ordering guarantees in general, so we must keep this in mind when implementing.
+    - Duplicate messages also need to be handled for "at-most-once" delivery (or the events must be idempotent (e.g. add a "before" state that can be checked against?)).
 
 ### Implementation Details
 
 #### Subscription as `Record<EventType, ISubscriber[]>`
+
 - Unless event types are dynamic, we can just use enum (or enum-like constructs) to describe them and be type-safer.
 - See [`Record<Keys, Type>` doc](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type).
 - `publish`, `subscribe`, `unsubscribe` are all O(sub) (sub = # of subscribers).
-    - Subscription is not just O(1) if we want to also check if the subscriber is not already registered for that event.
-    - Maybe switch to some kind of balanced tree structure based on some ordering of subscribers if we really need to optimize for `subscribe` and `unsubscribe`? `publish` will still be O(sub).
+  - Subscription is not just O(1) if we want to also check if the subscriber is not already registered for that event.
+  - Maybe switch to some kind of balanced tree structure based on some ordering of subscribers if we really need to optimize for `subscribe` and `unsubscribe`? `publish` will still be O(sub).
 
 #### Ordering Guarantees
 

@@ -24,8 +24,7 @@ interface IPublishSubscribeService {
 
 // implementations
 class PublishSubscribeService implements IPublishSubscribeService {
-  private readonly subscriptions: Partial<Record<EventType, ISubscriber[]>> =
-    {};
+  private readonly subscriptions: Partial<Record<EventType, ISubscriber[]>> = {};
 
   publish(event: IEvent): void {
     const eventType = event.type();
@@ -57,10 +56,7 @@ class PublishSubscribeService implements IPublishSubscribeService {
 }
 
 class MachineSaleEvent implements IEvent {
-  constructor(
-    private readonly _sold: number,
-    private readonly _machineId: string
-  ) {}
+  constructor(private readonly _sold: number, private readonly _machineId: string) {}
 
   machineId(): string {
     return this._machineId;
@@ -76,10 +72,7 @@ class MachineSaleEvent implements IEvent {
 }
 
 class MachineRefillEvent implements IEvent {
-  constructor(
-    private readonly _refill: number,
-    private readonly _machineId: string
-  ) {}
+  constructor(private readonly _refill: number, private readonly _machineId: string) {}
 
   machineId(): string {
     throw new Error("Method not implemented.");
@@ -150,18 +143,13 @@ const eventGenerator = (): IEvent => {
 // program
 (async () => {
   // create 3 machines with a quantity of 10 stock
-  const machines: Machine[] = [
-    new Machine("001"),
-    new Machine("002"),
-    new Machine("003"),
-  ];
+  const machines: Machine[] = [new Machine("001"), new Machine("002"), new Machine("003")];
 
   // create a machine sale event subscriber. inject the machines (all subscribers should do this)
   const saleSubscriber = new MachineSaleSubscriber(machines);
 
   // create the PubSub service
-  const pubSubService: IPublishSubscribeService =
-    null as unknown as IPublishSubscribeService; // implement and fix this
+  const pubSubService: IPublishSubscribeService = null as unknown as IPublishSubscribeService; // implement and fix this
 
   // create 5 random events
   const events = [1, 2, 3, 4, 5].map((i) => eventGenerator());
