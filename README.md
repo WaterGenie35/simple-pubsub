@@ -54,11 +54,12 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
   - Event publishers should be decoupled from the receivers.
   - In our case:
     - Individual machines only care about publishing their statuses to certain events.
-    - Handlers only care about subscribing to events they are interested in.
+    - Handlers only care about handling events they've subscribed to.
 - [Azure's Pub/Sub Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber)
   - In particular, see some common [issues and considerations](https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber#issues-and-considerations) for this pattern.
     - Pub/sub pattern has no ordering guarantees in general, so we must keep this in mind when implementing.
     - Duplicate messages also need to be handled for "at-most-once" delivery (or the events must be idempotent (e.g. add a "before" state that can be checked against?)).
+- In practice, look into Apache Kafka, RabbitMQ, etc.
 
 ### Implementation Details
 
@@ -73,3 +74,15 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 #### Ordering Guarantees
 
 #### At-Most-Once Guarantees
+
+#### Other Notes
+
+- Difference between subscribing to `IEvent.type()` vs `IEvent`?
+  - Just another abstraction layer?
+
+### Possible Toy Projects
+
+- Chat application
+  - Users join (subscribe to) chat rooms
+  - Chat rooms broadcast (publish) to users
+  - The service must then make sure not to send a user's message back to itself.

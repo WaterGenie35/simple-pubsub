@@ -7,19 +7,44 @@ enum EventType {
 }
 
 // interfaces
+/**
+ * Describes an event that can be published to the pub-sub service.
+ */
 interface IEvent {
   type: () => EventType;
   machineId: () => string;
 }
 
+/**
+ * Handles incoming events from the pub-sub service.
+ */
 interface ISubscriber {
   handle: (event: IEvent) => void;
 }
 
+/**
+ * Processes incoming events and broadcast them to all registered subscribers.
+ */
 interface IPublishSubscribeService {
+  /**
+   * Publishes the event to all registered subscribers.
+   * Will have no effect if there are no subscribers registered to the corresponding event type.
+   */
   publish: (event: IEvent) => void;
-  subscribe: (type: EventType, handler: ISubscriber) => void;
-  unsubscribe: (type: EventType, handler: ISubscriber) => void;
+
+  /**
+   * Registers the handler to the event type.
+   * Registered handlers will be called every time an event of the corresponding type gets published.
+   * Will have no effect if the handler is already registered to the event type.
+   */
+  subscribe: (eventType: EventType, handler: ISubscriber) => void;
+
+  /**
+   * Un-registers the handler from the event type.
+   * Un-registered handlers will no longer be called when an event of the corresponding type gets published.
+   * Will have no effect if the handler is not registered to the event type in the first place.
+   */
+  unsubscribe: (eventType: EventType, handler: ISubscriber) => void;
 }
 
 // implementations
