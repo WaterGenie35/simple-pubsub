@@ -44,6 +44,9 @@ class MachineRefillEvent implements IEvent {
   }
 }
 
+/**
+ * Handles sale operations.
+ */
 class MachineSaleSubscriber implements ISubscriber {
   public machines: Machine[];
 
@@ -56,6 +59,9 @@ class MachineSaleSubscriber implements ISubscriber {
   }
 }
 
+/**
+ * Handles refilling operations.
+ */
 class MachineRefillSubscriber implements ISubscriber {
   handle(event: IEvent): void {
     throw new Error("Method not implemented.");
