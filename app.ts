@@ -1,6 +1,24 @@
+// constants
+// see https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums
+// const OEventType = {
+//     // Revert everything back to strings if these are dynamic.
+//     Sale: "SALE",
+//     Refill: "REFILL",
+//     LowStockWarning: "LOW_STOCK_WARNING",
+//     StockLevelOk: "STOCK_LEVEL_OK",
+// } as const;
+// type EventType = typeof OEventType[keyof typeof OEventType];
+enum EventType {
+    Sale,
+    Refill,
+    LowStockWarning,
+    StockLevelOk,
+}
+
+
 // interfaces
 interface IEvent {
-  type(): string;
+  type(): EventType;
   machineId(): string;
 }
 
@@ -9,13 +27,45 @@ interface ISubscriber {
 }
 
 interface IPublishSubscribeService {
-  publish (event: IEvent): void;
-  subscribe (type: string, handler: ISubscriber): void;
-  // unsubscribe ( /* Question 2 - build this feature */ );
+  publish(event: IEvent): void;
+  subscribe(type: EventType, handler: ISubscriber): void;
+  unsubscribe(type: EventType, handler: ISubscriber): void;
 }
 
 
 // implementations
+class PublishSubscribeService implements IPublishSubscribeService {
+    #subscriptions: Partial<Record<EventType, ISubscriber[]>> = {};
+
+    publish(event: IEvent) {
+        let eventType = event.type();
+        if (eventType in this.#subscriptions) {
+            this.#subscriptions[eventType]?.forEach((subscriber) => {
+                subscriber.handle(event);
+            });
+        }
+    }
+
+    subscribe(eventType: EventType, handler: ISubscriber) {
+        let subscribers = this.#subscriptions[eventType];
+        if (subscribers === undefined) {
+            subscribers = [handler];
+        } else if (subscribers.indexOf(handler) !== -1) {
+            subscribers.push(handler);
+        }
+    }
+
+    unsubscribe(eventType: EventType, handler: ISubscriber) {
+        let subscribers = this.#subscriptions[eventType];
+        if (subscribers !== undefined) {
+            let handlerIndex = subscribers.indexOf(handler);
+            if (handlerIndex !== -1) {
+                subscribers.splice(handlerIndex, 1);
+            }
+        }
+    }
+}
+
 class MachineSaleEvent implements IEvent {
   constructor(private readonly _sold: number, private readonly _machineId: string) {}
 
@@ -27,8 +77,8 @@ class MachineSaleEvent implements IEvent {
     return this._sold
   }
 
-  type(): string {
-    return 'sale';
+  type(): EventType {
+    return EventType.Sale;
   }
 }
 
@@ -39,8 +89,8 @@ class MachineRefillEvent implements IEvent {
     throw new Error("Method not implemented.");
   }
 
-  type(): string {
-    throw new Error("Method not implemented.");
+  type(): EventType {
+    return EventType.Refill;
   }
 }
 

@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "strict": true,
-        "target": "es2015",  // async function requires promise before es2015
         "outDir": "dist"
     },
     "files": ["app.ts"]
