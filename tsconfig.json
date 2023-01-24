@@ -1,6 +1,10 @@
 {
     "compilerOptions": {
         "strict": true,
+        "lib": [
+            "ES2015",
+            "DOM"
+        ],
         "outDir": "dist"
     },
     "files": ["app.ts"]

@@ -15,8 +15,6 @@
         "project": ["./tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/no-floating-promises": "off",
-        // TODO remove after completing the task:
-        "@typescript-eslint/no-unused-vars": "off"
+        "@typescript-eslint/no-floating-promises": "off"
     }
 }
