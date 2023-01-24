@@ -33,6 +33,14 @@ Please share your work using a GitHub repository with @proftom.
 
 ## Development
 
+### Building
+
+- Run `tsc` or `npm build`
+
+### Running
+
+- Run `npm start`
+
 ### Formatting
 
 - Project is configured to apply lint-staged with eslint and prettier pre-commit.

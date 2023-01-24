@@ -1,11 +1,16 @@
 {
     "compilerOptions": {
         "strict": true,
+        "target": "ES5",
+        "module": "CommonJS",
         "lib": [
             "ES2015",
             "DOM"
         ],
-        "outDir": "dist"
+        "outDir": "dist",
+        "sourceMap": true
     },
-    "files": ["app.ts"]
+    "include": [
+        "src/**/*"
+    ]
 }

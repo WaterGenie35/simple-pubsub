@@ -2,10 +2,12 @@
   "name": "simple-pubsub",
   "version": "1.0.0",
   "description": "A simple implementation of the publish-subscribe mechanism.",
-  "main": "index.js",
+  "main": "dist/app.js",
   "scripts": {
+    "prepare": "husky install",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky install"
+    "build": "tsc",
+    "start": "node dist/app.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint --cache",
