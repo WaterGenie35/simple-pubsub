@@ -35,10 +35,7 @@ Please share your work using a GitHub repository with @proftom.
 
 ### Formatting
 
-- Configure husky:
-  ```bash
-  npx husky add .husky/pre-commit "npx lint-staged"
-  ```
+- Project is configured to apply lint-staged with eslint and prettier pre-commit.
 - Optionally configure development environment:
   - VSCode `settings.json` example:
     ```json
@@ -50,6 +47,8 @@ Please share your work using a GitHub repository with @proftom.
       }
     }
     ```
+- Only prettier applies the fixes and can pass through to the commit (strictly no behavioral changes). Eslint errors should be handled manually
+  - E.g. manual `--fix` + inspect as opposed to having lint-staged `--fix` everything and commit in one go.
 
 ## Notes
 

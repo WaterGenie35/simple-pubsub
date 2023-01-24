@@ -8,7 +8,7 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "eslint --cache --fix",
+    "*.{js,jsx,ts,tsx}": "eslint --cache",
     "*.{js,jsx,ts,tsx,md}": "prettier --write --ignore-unknown"
   },
   "repository": {
