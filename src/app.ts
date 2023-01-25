@@ -204,7 +204,7 @@ export class MachineStockLevelOkSubscriber extends MachineSubscriber {
 export class Machine {
   public static readonly LowStockThreshold = 2; // Inclusive; low stock in the [0, 2] range.
 
-  public stockLevel = 5; // Just so we are more likely to cross the threshold from the event generator.
+  public stockLevel = 10;
   public id: string;
   public pubSubService: IPublishSubscribeService;
 
@@ -281,7 +281,7 @@ const eventGenerator = (machines: Machine[]): IEvent => {
   // Create the PubSub service
   const pubSubService: IPublishSubscribeService = new PublishSubscribeService();
 
-  // Create 3 machines with a quantity of 5 stock (default)
+  // Create 3 machines with a quantity of 10 stock (default)
   const machineIds: string[] = ["001", "002", "003"];
   const machines: Machine[] = machineIds.map((id, i) => new Machine(id, pubSubService));
 
