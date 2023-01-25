@@ -82,13 +82,14 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 
 ### Implementation Details
 
+![Rough class diagram overview.](/doc/class-diagram.webp)
+
 #### Subscription as `Record<EventType, Array<ISubscriber>>`
 
 - Unless event types are dynamic, we can just use enum (or enum-like constructs) to describe them and be type-safer.
 - See [`Record<Keys, Type>` doc](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type).
 - `publish`, `subscribe`, `unsubscribe` are all O(sub) (sub = # of subscribers).
   - Subscription is not just O(1) if we want to also check if the subscriber is not already registered for that event.
-  - Maybe switch to some kind of balanced tree structure based on some ordering of subscribers if we really need to optimize for `subscribe` and `unsubscribe`? `publish` will still be O(sub).
 
 #### Event Side-Effects from Subscribers
 
@@ -97,7 +98,12 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 
 #### Ordering Guarantees
 
+- This is a problem when our pub-sub system is properly distributed, but right now, the service, publishers, and subscribers are synchronous.
+  - Need to research; e.g. how can we distinguish between an earlier event that happens to arrive late vs an event that occurs later?
+
 #### At-Most-Once Guarantees
+
+- For crossing-threshold checks, we just check the stock level before and after for now.
 
 ### Possible Toy Projects
 

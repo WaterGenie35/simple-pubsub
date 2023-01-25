@@ -1,0 +1,68 @@
+@startuml
+
+together {
+    enum EventType {
+        Sale
+        Refill
+        LowStockWarning
+        StockLevelOk
+    }
+    interface IEvent {
+        type(): string;
+        machineId(): string;
+    }
+}
+interface ISubscriber {
+    handle(event: IEvent): void;
+}
+interface IPublishSubscribeService {
+    publish(event: IEvent): void;
+    subscribe(type: EventType, handler: ISubscriber): void;
+    unsubscribe(type: EventType, handler: ISubscriber): void;
+}
+
+
+
+class PublishSubscribeService implements IPublishSubscribeService {
+    private _subscriptions: Record<EventType, Array<ISubscriber>>;
+}
+
+class Machine {
+    static LowStockThreshold = 2;
+    stockLevel = 10;
+    id: string;
+    pubSubService: IPublishSubscribeService;
+    consumeStock(amount: number): void;
+    refillStock(amount: number): void;
+}
+
+abstract class MachineEvent implements IEvent {
+    abstract type(): EventType;
+}
+class SaleEvent extends MachineEvent {
+    getSoldQuantity(): number;
+}
+class RefillEvent extends MachineEvent {
+    getRefillQuantity(): number;
+}
+class LowStockWarningEvent extends MachineEvent {}
+class StockLevelOkEvent extends MachineEvent {}
+
+abstract class MachineSubscriber implements ISubscriber {
+    abstract handle(event: IEvent): void;
+    getEventMachine(event: IEvent): Machine | undefined;
+}
+class SaleSubscriber extends MachineSubscriber {}
+class RefillSubscriber extends MachineSubscriber {}
+class LowStockWarningSubscriber extends MachineSubscriber {}
+class StockLevelOkSubscriber extends MachineSubscriber {}
+
+
+
+EventType -right-* IEvent
+IEvent -right-> IPublishSubscribeService : "notifies"
+IPublishSubscribeService -right-> ISubscriber : "calls"
+Machine -down-> IEvent : "fires"
+ISubscriber -up-> Machine : "updates"
+
+@enduml

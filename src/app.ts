@@ -282,7 +282,8 @@ const eventGenerator = (machines: Machine[]): IEvent => {
   const pubSubService: IPublishSubscribeService = new PublishSubscribeService();
 
   // Create 3 machines with a quantity of 5 stock (default)
-  const machines: Machine[] = ["001", "002", "003"].map((id, i) => new Machine(id, pubSubService));
+  const machineIds: string[] = ["001", "002", "003"];
+  const machines: Machine[] = machineIds.map((id, i) => new Machine(id, pubSubService));
 
   // Create subscribers
   // Inject the machines (all subscribers should do this)
