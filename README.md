@@ -33,13 +33,13 @@ Please share your work using a GitHub repository with @proftom.
 
 ## Development
 
-### Building
-
-- Run `tsc` or `npm build`
-
 ### Running
 
-- Run `npm start`
+```bash
+npm start
+```
+
+- Uses `ts-node` instead of `node` so errors all point to the TS files instead.
 
 ### Formatting
 
