@@ -61,6 +61,12 @@ npm start
     npm run lint-fix
     ```
 
+### Testing
+
+```bash
+npm test
+```
+
 ## Notes
 
 ### TypeScript
