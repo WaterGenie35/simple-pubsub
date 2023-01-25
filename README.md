@@ -117,5 +117,6 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 - Difference between subscribing to `IEvent.type()` vs `IEvent`?
   - Just another abstraction layer?
 - Store machines in a dictionary instead to facilitate the look-up?
+  - Or keep track of machines instead of machine ids.
 - Where should the logic live?
   - E.g. making sure stock level is non-negative.
