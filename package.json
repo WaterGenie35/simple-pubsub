@@ -5,6 +5,8 @@
   "main": "dist/app.js",
   "scripts": {
     "prepare": "husky install",
+    "lint": "eslint src/app.ts",
+    "lint-fix": "eslint src/app.ts --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx ts-node src/app.ts"
   },

@@ -48,7 +48,6 @@ npm start
   - VSCode `settings.json` example:
     ```json
     {
-      // ...
       "editor.formatOnSave": true,
       "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -57,6 +56,10 @@ npm start
     ```
 - Only prettier applies the fixes and can pass through to the commit (strictly no behavioral changes). Eslint errors should be handled manually
   - E.g. manual `--fix` + inspect as opposed to having lint-staged `--fix` everything and commit in one go.
+    ```bash
+    npm run lint
+    npm run lint-fix
+    ```
 
 ## Notes
 

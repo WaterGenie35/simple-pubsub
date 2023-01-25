@@ -1,9 +1,9 @@
 // Enums
 enum EventType {
-  Sale,
-  Refill,
-  LowStockWarning,
-  StockLevelOk,
+  Sale = "SALE",
+  Refill = "REFILL",
+  LowStockWarning = "LOW_STOCK_WARNING",
+  StockLevelOk = "STOCK_LEVEL_OK",
 }
 
 // Interfaces
@@ -60,20 +60,20 @@ class PublishSubscribeService implements IPublishSubscribeService {
     const eventType = event.type();
     if (eventType in this._subscriptions) {
       this._subscriptions[eventType]?.forEach((handler) => {
-        console.log(`[Service]: Delegating ${eventType} handling to ${handler.toString()}...`);
+        console.log(`[PubSubService]:\tDelegating ${eventType} handling to ${handler.toString()}...`);
         handler.handle(event);
       });
     }
   }
 
   subscribe(eventType: EventType, handler: ISubscriber): void {
-    let subscribers = this._subscriptions[eventType];
+    const subscribers = this._subscriptions[eventType];
     if (subscribers === undefined) {
-      subscribers = [handler];
-      console.log(`[Service]: Subscribed ${handler.toString()} to ${eventType}.`);
-    } else if (subscribers.indexOf(handler) !== -1) {
+      this._subscriptions[eventType] = [handler];
+      console.log(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
+    } else if (subscribers.includes(handler)) {
       subscribers.push(handler);
-      console.log(`[Service]: Subscribed ${handler.toString()} to ${eventType}.`);
+      console.log(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
     }
   }
 
@@ -83,7 +83,7 @@ class PublishSubscribeService implements IPublishSubscribeService {
       const handlerIndex = subscribers.indexOf(handler);
       if (handlerIndex !== -1) {
         subscribers.splice(handlerIndex, 1);
-        console.log(`[Service]: Unsubscribed ${handler.toString()} from ${eventType}.`);
+        console.log(`[PubSubService]:\tUnsubscribed ${handler.toString()} from ${eventType}.`);
       }
     }
   }
@@ -164,8 +164,8 @@ class MachineSaleSubscriber extends MachineSubscriber {
       const machine = this.getEventMachine(event);
       if (machine !== undefined) {
         const amountSold = event.getSoldQuantity();
+        console.log(`[SaleSubscriber]:\tProcessing ${amountSold} sale on machine ${machine.id}...`);
         machine.consumeStock(amountSold);
-        console.log(`[SaleSubscriber]: Sold ${amountSold} on machine ${machine.id}.`);
       }
     }
   }
@@ -177,8 +177,8 @@ class MachineRefillSubscriber extends MachineSubscriber {
       const machine = this.getEventMachine(event);
       if (machine !== undefined) {
         const refillAmount = event.getRefillQuantity();
+        console.log(`[RefillSubscriber]:\tProcessing ${refillAmount} refill on machine ${machine.id}...`);
         machine.refillStock(refillAmount);
-        console.log(`[RefillSubscriber]: Refilled ${refillAmount} on machine ${machine.id}.`);
       }
     }
   }
@@ -187,7 +187,7 @@ class MachineRefillSubscriber extends MachineSubscriber {
 class MachineLowStockWarningSubscriber extends MachineSubscriber {
   handle(event: IEvent): void {
     if (event instanceof MachineLowStockWarningEvent) {
-      console.log(`[LowStockWarningSubscriber]: Received LowStockWarning event from machine ${event.machineId()}.`);
+      console.log(`[LowStockWarningSubscriber]:\tReceived LowStockWarning event from machine ${event.machineId()}.`);
     }
   }
 }
@@ -195,7 +195,7 @@ class MachineLowStockWarningSubscriber extends MachineSubscriber {
 class MachineStockLevelOkSubscriber extends MachineSubscriber {
   handle(event: IEvent): void {
     if (event instanceof MachineStockLevelOkEvent) {
-      console.log(`[StockLevelOkSubscriber]: Received StockLevelOk event from machine ${event.machineId()}.`);
+      console.log(`[StockLevelOkSubscriber]:\tReceived StockLevelOk event from machine ${event.machineId()}.`);
     }
   }
 }
@@ -204,7 +204,7 @@ class MachineStockLevelOkSubscriber extends MachineSubscriber {
 class Machine {
   public static readonly LowStockThreshold = 2; // Inclusive; low stock in the [0, 2] range.
 
-  public stockLevel = 10;
+  public stockLevel = 5; // Just so we are more likely to cross the threshold from the event generator.
   public id: string;
   public pubSubService: IPublishSubscribeService;
 
@@ -220,18 +220,18 @@ class Machine {
     const oldStockLevel = this.stockLevel;
     const newStockLevel = oldStockLevel + amount;
     this.stockLevel = newStockLevel;
-    console.log(`[Machine]: Adjusted stock for machine ${this.id} from ${oldStockLevel} to ${newStockLevel}.`);
+    console.log(`[Machine]:\tAdjusted stock for machine ${this.id} from ${oldStockLevel} to ${newStockLevel}.`);
 
     const goesAboveThreshold = oldStockLevel <= Machine.LowStockThreshold && newStockLevel > Machine.LowStockThreshold;
     const goesBelowThreshold = oldStockLevel > Machine.LowStockThreshold && newStockLevel <= Machine.LowStockThreshold;
     if (goesAboveThreshold) {
       const stockLevelOkEvent = new MachineStockLevelOkEvent(this.id);
       this.pubSubService.publish(stockLevelOkEvent);
-      console.log(`[Machine]: Published StockLevelOk event from machine ${this.id}.`);
+      console.log(`[Machine]:\tPublished StockLevelOk event from machine ${this.id}.`);
     } else if (goesBelowThreshold) {
       const lowStockWarningEvent = new MachineLowStockWarningEvent(this.id);
       this.pubSubService.publish(lowStockWarningEvent);
-      console.log(`[Machine]: Published LowStockWarning event from machine ${this.id}.`);
+      console.log(`[Machine]:\tPublished LowStockWarning event from machine ${this.id}.`);
     }
   }
 
@@ -260,15 +260,19 @@ const randomIntInclusive = (min: number, max: number): number => {
 const eventGenerator = (machines: Machine[]): IEvent => {
   const random = Math.random();
   const sampleMachineId = randomMachine(machines);
-  if (random < 0.5) {
+  if (random < 0.9) {
     const saleQty = randomIntInclusive(1, 2);
     const saleEvent = new MachineSaleEvent(sampleMachineId, saleQty);
-    console.log(`[EventGenerator]: Created new sale event with quantity ${saleQty} for machine ${sampleMachineId}`);
+    console.log(
+      `[EventGenerator]:\tCreated ${saleEvent.type()} event with quantity ${saleQty} for machine ${sampleMachineId}.`
+    );
     return saleEvent;
   }
   const refillQty = randomIntInclusive(3, 5);
   const refillEvent = new MachineRefillEvent(sampleMachineId, refillQty);
-  console.log(`[EventGenerator]: Created new refill event with quantity ${refillQty} for machine ${sampleMachineId}`);
+  console.log(
+    `[EventGenerator]:\tCreated ${refillEvent.type()} event with quantity ${refillQty} for machine ${sampleMachineId}.`
+  );
   return refillEvent;
 };
 
@@ -277,21 +281,27 @@ const eventGenerator = (machines: Machine[]): IEvent => {
   // Create the PubSub service
   const pubSubService: IPublishSubscribeService = new PublishSubscribeService();
 
-  // Create 3 machines with a quantity of 10 stock (default)
+  // Create 3 machines with a quantity of 5 stock (default)
   const machines: Machine[] = ["001", "002", "003"].map((id, i) => new Machine(id, pubSubService));
 
   // Create subscribers
   // Inject the machines (all subscribers should do this)
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const saleSubscriber = new MachineSaleSubscriber(machines);
   const refillSubscriber = new MachineRefillSubscriber(machines);
   const lowStockWarningSubscriber = new MachineLowStockWarningSubscriber(machines);
-  const StockLevelOkSubscriber = new MachineStockLevelOkSubscriber(machines);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  const stockLevelOkSubscriber = new MachineStockLevelOkSubscriber(machines);
+
+  // Register subscribers to events
+  pubSubService.subscribe(EventType.Sale, saleSubscriber);
+  pubSubService.subscribe(EventType.Refill, refillSubscriber);
+  pubSubService.subscribe(EventType.LowStockWarning, lowStockWarningSubscriber);
+  pubSubService.subscribe(EventType.StockLevelOk, stockLevelOkSubscriber);
 
   // Create 5 random events
   const events = [...Array(5)].map((x, i) => eventGenerator(machines));
 
   // Publish the events
-  events.map(pubSubService.publish);
+  console.log(`[Main]:\tPublishing all events...`);
+  events.map(pubSubService.publish.bind(pubSubService)); // Defines `this`
+  console.log(`[Main]:\tDone`);
 })();
