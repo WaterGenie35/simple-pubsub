@@ -7,7 +7,7 @@
     "prepare": "husky install",
     "lint": "eslint **/*.ts",
     "lint-fix": "eslint **/*.ts --fix",
-    "test": "jest",
+    "test": "jest --silent",
     "start": "npx ts-node src/app.ts"
   },
   "lint-staged": {

@@ -102,14 +102,13 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 - Subscribers delegate machine operations to the `Machine` class.
 - The machine will be the one responsible for creating and publishing any events when appropriate.
 
-#### Ordering Guarantees
+#### Ordering and At-Most-Once Guarantees
 
 - This is a problem when our pub-sub system is properly distributed, but right now, the service, publishers, and subscribers are synchronous.
   - Need to research; e.g. how can we distinguish between an earlier event that happens to arrive late vs an event that occurs later?
-
-#### At-Most-Once Guarantees
-
 - For crossing-threshold checks, we just check the stock level before and after for now.
+- Use some kind of queue?
+  - When should the queue be processed? Continuously in parallel with any potential event firing?
 
 ### Possible Toy Projects
 
