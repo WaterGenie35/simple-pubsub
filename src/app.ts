@@ -1,3 +1,5 @@
+import { Queue } from "./utils";
+
 // Enums
 export enum EventType {
   Sale = "SALE",
@@ -55,8 +57,23 @@ export interface IPublishSubscribeService {
 // Implementations
 export class PublishSubscribeService implements IPublishSubscribeService {
   private readonly _subscriptions: Partial<Record<EventType, ISubscriber[]>> = {};
+  private readonly _eventQueue: Queue<IEvent> = new Queue<IEvent>();
 
   publish(event: IEvent): void {
+    console.debug(`[PubSubService]:\tPushing ${event.type()} event to the queue...`);
+    this._eventQueue.enqueue(event);
+    this._processEvents();
+  }
+
+  private _processEvents(): void {
+    let event = this._eventQueue.dequeue();
+    while (event !== undefined) {
+      this._delegate(event);
+      event = this._eventQueue.dequeue();
+    }
+  }
+
+  private _delegate(event: IEvent): void {
     const eventType = event.type();
     if (eventType in this._subscriptions) {
       this._subscriptions[eventType]?.forEach((handler) => {
