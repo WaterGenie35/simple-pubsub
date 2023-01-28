@@ -1,4 +1,4 @@
-import { Queue } from "./utils";
+import { Queue, randomIntInclusive } from "./utils";
 
 // Enums
 export enum EventType {
@@ -267,11 +267,6 @@ export class Machine {
 const randomMachine = (machines: Machine[]): string => {
   const sampleMachine = machines[Math.floor(Math.random() * machines.length)];
   return sampleMachine.id;
-};
-
-const randomIntInclusive = (min: number, max: number): number => {
-  // https://stackoverflow.com/a/7228322/19566965
-  return Math.floor(min + Math.random() * (max - min + 1));
 };
 
 const eventGenerator = (machines: Machine[]): IEvent => {

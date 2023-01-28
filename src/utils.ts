@@ -42,3 +42,8 @@ export class Queue<T> {
     return item;
   }
 }
+
+export function randomIntInclusive(min: number, max: number): number {
+  // https://stackoverflow.com/a/7228322/19566965
+  return Math.floor(min + Math.random() * (max - min + 1));
+}
