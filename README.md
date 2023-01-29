@@ -88,6 +88,8 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 
 ### Implementation Details
 
+I've made some changes ([#1](https://github.com/WaterGenie35/simple-pubsub/pull/1)) since the email I sent. If we need the version at that point in time, it's [0eeec25](https://github.com/WaterGenie35/simple-pubsub/tree/0eeec2509dd0ea918600ca9f15fe8d947622431e).
+
 ![Rough class diagram overview.](/doc/class-diagram.webp)
 
 #### Subscription as `Map<EventType, Set<ISubscriber>>`
