@@ -59,21 +59,22 @@ export class PublishSubscribeService implements IPublishSubscribeService {
   private readonly _subscriptions: Partial<Record<EventType, Set<ISubscriber>>> = {};
   private readonly _eventQueue: Queue<IEvent> = new Queue<IEvent>();
 
-  publish(event: IEvent): void {
+  async publish(event: IEvent): Promise<void> {
     console.debug(`[PubSubService]:\tPushing ${event.type()} event to the queue...`);
     this._eventQueue.enqueue(event);
     this._processEvents();
   }
 
-  private _processEvents(): void {
+  private async _processEvents(): Promise<void> {
     let event = this._eventQueue.dequeue();
     while (event !== undefined) {
-      this._delegate(event);
+      // Is there a chance that this loop picks up the same event from multiple publish calls?
+      await this._handle(event);
       event = this._eventQueue.dequeue();
     }
   }
 
-  private _delegate(event: IEvent): void {
+  private async _handle(event: IEvent): Promise<void> {
     const eventType = event.type();
     if (eventType in this._subscriptions) {
       this._subscriptions[eventType]?.forEach((handler) => {
