@@ -33,7 +33,7 @@ describe("App tests", () => {
 
   // Repeating
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
 
     // Reset machine stock level
     machines?.forEach((machine) => {
@@ -131,6 +131,19 @@ describe("App tests", () => {
       pubSubService.publish(event);
       pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
 
+      expect(mockHandler.mock.calls).toHaveLength(0);
+    });
+    test("subscribe while publishing the event should not call ISubscriber.handle", () => {
+      const event = new app.MachineSaleEvent("001", 1);
+      const mockHandler = jest.spyOn(saleSubscriber, "handle");
+
+      const originalPublish = pubSubService.publish.bind(pubSubService);
+      const mockPublish = jest.spyOn(pubSubService, "publish");
+      mockPublish.mockImplementation((event: app.IEvent) => {
+        pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
+        originalPublish(event); // continue with original logic after we have a new subscription
+      });
+      pubSubService.publish(event);
       expect(mockHandler.mock.calls).toHaveLength(0);
     });
     test("publish after unsubscribe should not call ISubscriber.handle", () => {
