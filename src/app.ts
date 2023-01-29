@@ -56,7 +56,7 @@ export interface IPublishSubscribeService {
 
 // Implementations
 export class PublishSubscribeService implements IPublishSubscribeService {
-  private readonly _subscriptions: Partial<Record<EventType, ISubscriber[]>> = {};
+  private readonly _subscriptions: Partial<Record<EventType, Set<ISubscriber>>> = {};
   private readonly _eventQueue: Queue<IEvent> = new Queue<IEvent>();
 
   publish(event: IEvent): void {
@@ -86,23 +86,19 @@ export class PublishSubscribeService implements IPublishSubscribeService {
   subscribe(eventType: EventType, handler: ISubscriber): void {
     const subscribers = this._subscriptions[eventType];
     if (subscribers === undefined) {
-      this._subscriptions[eventType] = [handler];
-      console.debug(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
-    } else if (!subscribers.includes(handler)) {
-      subscribers.push(handler);
-      console.debug(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
+      this._subscriptions[eventType] = new Set<ISubscriber>([handler]);
+    } else {
+      subscribers.add(handler);
     }
+    console.debug(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
   }
 
   unsubscribe(eventType: EventType, handler: ISubscriber): void {
     const subscribers = this._subscriptions[eventType];
     if (subscribers !== undefined) {
-      const handlerIndex = subscribers.indexOf(handler);
-      if (handlerIndex !== -1) {
-        subscribers.splice(handlerIndex, 1);
-        console.debug(`[PubSubService]:\tUnsubscribed ${handler.toString()} from ${eventType}.`);
-      }
+      subscribers.delete(handler);
     }
+    console.debug(`[PubSubService]:\tUnsubscribed ${handler.toString()} from ${eventType}.`);
   }
 }
 
