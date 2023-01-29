@@ -37,7 +37,7 @@ export interface IPublishSubscribeService {
    * Publishes the event to all registered subscribers.
    * Will have no effect if there are no subscribers registered to the corresponding event type.
    */
-  publish: (event: IEvent) => void;
+  publish: (event: IEvent) => Promise<void>;
 
   /**
    * Registers the handler to the event type.
@@ -77,10 +77,15 @@ export class PublishSubscribeService implements IPublishSubscribeService {
 
   private async _handle(event: IEvent): Promise<void> {
     const eventType = event.type();
+    const handleTime = Date.now();
     if (this._subscriptions.has(eventType)) {
       this._subscriptions.get(eventType)?.forEach((handler) => {
-        console.debug(`[PubSubService]:\tDelegating ${eventType} handling to ${handler.toString()}...`);
-        handler.handle(event);
+        const key = this._getSubscriptionKey(eventType, handler);
+        const subscriptionTime = this._subscriptionTimestamps.get(key);
+        if (subscriptionTime !== undefined && subscriptionTime <= handleTime) {
+          console.debug(`[PubSubService]:\tDelegating ${eventType} handling to ${handler.toString()}...`);
+          handler.handle(event);
+        }
       });
     }
   }
