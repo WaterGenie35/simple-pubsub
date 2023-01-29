@@ -1,3 +1,5 @@
+import { Queue, randomIntInclusive } from "./utils";
+
 // Enums
 export enum EventType {
   Sale = "SALE",
@@ -35,7 +37,7 @@ export interface IPublishSubscribeService {
    * Publishes the event to all registered subscribers.
    * Will have no effect if there are no subscribers registered to the corresponding event type.
    */
-  publish: (event: IEvent) => void;
+  publish: (event: IEvent) => Promise<void>;
 
   /**
    * Registers the handler to the event type.
@@ -54,37 +56,70 @@ export interface IPublishSubscribeService {
 
 // Implementations
 export class PublishSubscribeService implements IPublishSubscribeService {
-  private readonly _subscriptions: Partial<Record<EventType, ISubscriber[]>> = {};
+  private readonly _subscriptions = new Map<EventType, Set<ISubscriber>>();
+  private readonly _subscriptionTimestamps = new Map<string, number>();
+  private readonly _eventQueue: Queue<IEvent> = new Queue<IEvent>();
 
-  publish(event: IEvent): void {
+  async publish(event: IEvent): Promise<void> {
+    console.debug(`[PubSubService]:\tPushing ${event.type()} event to the queue...`);
+    this._eventQueue.enqueue(event);
+    this._processEvents();
+  }
+
+  private async _processEvents(): Promise<void> {
+    let event = this._eventQueue.dequeue();
+    while (event !== undefined) {
+      // Is there a chance that this loop picks up the same event from multiple publish calls?
+      await this._handle(event);
+      event = this._eventQueue.dequeue();
+    }
+  }
+
+  private async _handle(event: IEvent): Promise<void> {
     const eventType = event.type();
-    if (eventType in this._subscriptions) {
-      this._subscriptions[eventType]?.forEach((handler) => {
-        console.debug(`[PubSubService]:\tDelegating ${eventType} handling to ${handler.toString()}...`);
-        handler.handle(event);
+    const handleTime = Date.now();
+    if (this._subscriptions.has(eventType)) {
+      this._subscriptions.get(eventType)?.forEach((handler) => {
+        const key = this._getSubscriptionKey(eventType, handler);
+        const subscriptionTime = this._subscriptionTimestamps.get(key);
+        if (subscriptionTime !== undefined && subscriptionTime <= handleTime) {
+          console.debug(`[PubSubService]:\tDelegating ${eventType} handling to ${handler.toString()}...`);
+          handler.handle(event);
+        }
       });
     }
   }
 
+  private _getSubscriptionKey(eventType: EventType, subscriber: ISubscriber): string {
+    return `${eventType.toString()}-${subscriber.toString()}`;
+  }
+
   subscribe(eventType: EventType, handler: ISubscriber): void {
-    const subscribers = this._subscriptions[eventType];
+    const subscribers = this._subscriptions.get(eventType);
     if (subscribers === undefined) {
-      this._subscriptions[eventType] = [handler];
+      this._subscriptions.set(eventType, new Set<ISubscriber>([handler]));
+    } else {
+      subscribers.add(handler);
+    }
+
+    const key = this._getSubscriptionKey(eventType, handler);
+    if (!this._subscriptionTimestamps.has(key)) {
+      this._subscriptionTimestamps.set(key, Date.now());
       console.debug(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
-    } else if (!subscribers.includes(handler)) {
-      subscribers.push(handler);
-      console.debug(`[PubSubService]:\tSubscribed ${handler.toString()} to ${eventType}.`);
+    } else {
+      console.debug(`[PubSubService]:\t${handler.toString()} is already subscribed to ${eventType}.`);
     }
   }
 
   unsubscribe(eventType: EventType, handler: ISubscriber): void {
-    const subscribers = this._subscriptions[eventType];
+    const subscribers = this._subscriptions.get(eventType);
     if (subscribers !== undefined) {
-      const handlerIndex = subscribers.indexOf(handler);
-      if (handlerIndex !== -1) {
-        subscribers.splice(handlerIndex, 1);
-        console.debug(`[PubSubService]:\tUnsubscribed ${handler.toString()} from ${eventType}.`);
-      }
+      subscribers.delete(handler);
+      const key = this._getSubscriptionKey(eventType, handler);
+      this._subscriptionTimestamps.delete(key);
+      console.debug(`[PubSubService]:\tUnsubscribed ${handler.toString()} from ${eventType}.`);
+    } else {
+      console.debug(`[PubSubService]:\t${handler.toString()} is already unsubscribed from ${eventType}.`);
     }
   }
 }
@@ -250,11 +285,6 @@ export class Machine {
 const randomMachine = (machines: Machine[]): string => {
   const sampleMachine = machines[Math.floor(Math.random() * machines.length)];
   return sampleMachine.id;
-};
-
-const randomIntInclusive = (min: number, max: number): number => {
-  // https://stackoverflow.com/a/7228322/19566965
-  return Math.floor(min + Math.random() * (max - min + 1));
 };
 
 const eventGenerator = (machines: Machine[]): IEvent => {

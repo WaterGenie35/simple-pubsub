@@ -33,7 +33,7 @@ describe("App tests", () => {
 
   // Repeating
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
 
     // Reset machine stock level
     machines?.forEach((machine) => {
@@ -133,6 +133,22 @@ describe("App tests", () => {
 
       expect(mockHandler.mock.calls).toHaveLength(0);
     });
+    test("subscribe while publishing the event should not call ISubscriber.handle", () => {
+      const event = new app.MachineSaleEvent("001", 1);
+      const mockHandler = jest.spyOn(saleSubscriber, "handle");
+
+      const originalPublish = pubSubService.publish.bind(pubSubService);
+      const mockPublish = jest.spyOn(pubSubService, "publish");
+      const mockDateNow = jest.spyOn(Date, "now");
+      mockPublish.mockImplementation(async (event: app.IEvent): Promise<void> => {
+        mockDateNow.mockReturnValue(1);
+        pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
+        mockDateNow.mockReturnValue(0); // Assumed we called publish BEFORE the new subscription
+        originalPublish(event);
+      });
+      pubSubService.publish(event);
+      expect(mockHandler.mock.calls).toHaveLength(0);
+    });
     test("publish after unsubscribe should not call ISubscriber.handle", () => {
       // Already covered by unsubscribe idempotence test above.
     });
@@ -146,6 +162,7 @@ describe("App tests", () => {
       machines.push(machine);
       const saleEvent = new app.MachineSaleEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
 
       pubSubService.publish(saleEvent);
 
@@ -160,6 +177,7 @@ describe("App tests", () => {
       machines.push(machine);
       const saleEvent = new app.MachineSaleEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
 
       pubSubService.publish(saleEvent); // 1. sale event + 2. low stock event
       pubSubService.publish(saleEvent); // 3. sale event
@@ -182,6 +200,7 @@ describe("App tests", () => {
       machines.push(machine);
       const saleEvent = new app.MachineSaleEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Sale, saleSubscriber);
 
       pubSubService.publish(saleEvent);
 
@@ -199,6 +218,7 @@ describe("App tests", () => {
       machines.push(machine);
       const refillEvent = new app.MachineRefillEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Refill, refillSubscriber);
 
       pubSubService.publish(refillEvent);
 
@@ -209,10 +229,11 @@ describe("App tests", () => {
     test("handle refill event crossing above warning threshold should fire StockLevelOk event once", () => {
       const machineId = "just_in_time";
       const machine = new app.Machine(machineId, pubSubService);
-      machine.stockLevel = 2;
+      machine.stockLevel = 1;
       machines.push(machine);
       const refillEvent = new app.MachineRefillEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Refill, refillSubscriber);
 
       pubSubService.publish(refillEvent); // 1. refill event + 2. stock level ok event
       pubSubService.publish(refillEvent); // 3. refill event
@@ -231,10 +252,11 @@ describe("App tests", () => {
     test("handle refill event still below warning threshold should not fire StockLevelOk event", () => {
       const machineId = "need_more";
       const machine = new app.Machine(machineId, pubSubService);
-      machine.stockLevel = 1;
+      machine.stockLevel = 0;
       machines.push(machine);
       const refillEvent = new app.MachineRefillEvent(machineId, 1);
       const mockPublish = jest.spyOn(pubSubService, "publish");
+      pubSubService.subscribe(app.EventType.Refill, refillSubscriber);
 
       pubSubService.publish(refillEvent);
 

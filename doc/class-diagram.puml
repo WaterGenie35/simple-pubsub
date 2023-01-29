@@ -16,7 +16,7 @@ interface ISubscriber {
     handle(event: IEvent): void;
 }
 interface IPublishSubscribeService {
-    publish(event: IEvent): void;
+    async publish(event: IEvent): Promise<void>;
     subscribe(type: EventType, handler: ISubscriber): void;
     unsubscribe(type: EventType, handler: ISubscriber): void;
 }
@@ -24,7 +24,9 @@ interface IPublishSubscribeService {
 
 
 class PublishSubscribeService implements IPublishSubscribeService {
-    private _subscriptions: Record<EventType, Array<ISubscriber>>;
+    private _subscriptions: Map<EventType, Set<ISubscriber>>;
+    private _subscriptionTimestamps: Map<string, number>;
+    private _eventQueue: Queue<IEvent>;
 }
 
 class Machine {
