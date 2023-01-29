@@ -90,38 +90,22 @@ See [`typescript-notes` repo](https://github.com/WaterGenie35/typescript-notes).
 
 ![Rough class diagram overview.](/doc/class-diagram.webp)
 
-#### Subscription as `Record<EventType, Array<ISubscriber>>`
+#### Subscription as `Map<EventType, Set<ISubscriber>>`
 
 - Unless event types are dynamic, we can just use enum (or enum-like constructs) to describe them and be type-safer.
-- See [`Record<Keys, Type>` doc](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type).
-- `publish`, `subscribe`, `unsubscribe` are all O(sub) (sub = # of subscribers).
-  - Subscription is not just O(1) if we want to also check if the subscriber is not already registered for that event.
+- O(n) `publish`, amortised O(1) `subscribe` and `unsubscribe`.
 
 #### Event Side-Effects from Subscribers
 
 - Subscribers delegate machine operations to the `Machine` class.
-- The machine will be the one responsible for creating and publishing any events when appropriate.
+- The machine will be the one responsible for creating and publishing any additional events when appropriate.
 
 #### Ordering and At-Most-Once Guarantees
 
-- This is a problem when our pub-sub system is properly distributed, but right now, the service, publishers, and subscribers are synchronous.
-  - Need to research; e.g. how can we distinguish between an earlier event that happens to arrive late vs an event that occurs later?
-- For crossing-threshold checks, we just check the stock level before and after for now.
-- Use some kind of queue?
-  - When should the queue be processed? Continuously in parallel with any potential event firing?
+- Events are stored in a queue to guarantee they are handled in the published order.
+- For threshold-related events, we guarantee at-most-once in the firing logic.
+  - I.e. checks value before and after and only fire when it crosses.
 
-### Possible Toy Projects
+#### Subscription Timing
 
-- Chat application
-  - Users join (subscribe to) chat rooms
-  - Chat rooms broadcast (publish) to users
-  - The service must then make sure not to send a user's message back to itself.
-
-### Other Notes
-
-- Difference between subscribing to `IEvent.type()` vs `IEvent`?
-  - Just another abstraction layer?
-- Store machines in a dictionary instead to facilitate the look-up?
-  - Or keep track of machines instead of machine ids.
-- Where should the logic live?
-  - E.g. making sure stock level is non-negative.
+- In case published events are still being processed, new subscriptions are filtered out by keeping track of timestamps.
